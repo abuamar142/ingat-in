@@ -1,0 +1,11 @@
+{
+  "name": "ingat-in",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.6.0",
+    "node-cron": "^3.0.2",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
