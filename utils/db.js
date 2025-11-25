@@ -4,7 +4,9 @@ const FILE = "./data/users.json";
 
 export function loadUsers() {
   if (!fs.existsSync(FILE)) return [];
-  return JSON.parse(fs.readFileSync(FILE));
+  const content = fs.readFileSync(FILE, "utf-8");
+  if (!content.trim()) return [];
+  return JSON.parse(content);
 }
 
 export function saveUsers(data) {
