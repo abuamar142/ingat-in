@@ -4,10 +4,27 @@ Bot WhatsApp untuk reminder absen otomatis dengan web dashboard.
 
 ## Quick Start
 
+### Local Development
+
 ```bash
 npm install
 npm run dev
 ```
+
+### Docker (Recommended for Production)
+
+```bash
+# Using script
+./docker-start.sh
+
+# Or using Makefile
+make up
+
+# View logs (for QR code)
+make logs
+```
+
+See [DOCKER.md](DOCKER.md) for complete Docker guide.
 
 Scan QR code di terminal dengan WhatsApp.
 
@@ -19,11 +36,22 @@ Scan QR code di terminal dengan WhatsApp.
 - `npm run build` - Compile TypeScript
 - `npm start` - Production mode
 
+### Docker Commands
+
+- `make up` - Start bot
+- `make logs` - View logs
+- `make down` - Stop bot
+- `make backup` - Backup data
+- `make help` - Show all commands
+
+See [DOCKER.md](DOCKER.md) for more details.
+
 ## Dashboard
 
 Web dashboard dengan **real-time updates** menggunakan WebSocket:
 
 **Fitur:**
+
 - 🎨 Modern UI dengan Tailwind CSS
 - 🔄 Real-time auto-update via WebSocket
 - 📊 Live statistics (total users, absen pagi/sore)
@@ -34,6 +62,7 @@ Web dashboard dengan **real-time updates** menggunakan WebSocket:
 - 📱 Responsive design untuk mobile
 
 **Endpoints:**
+
 - `GET /` - Dashboard UI
 - `GET /api/users` - Data semua users
 - `GET /api/stats` - Statistik absensi

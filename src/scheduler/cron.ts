@@ -24,8 +24,8 @@ export function startCron(sock: BotSocket): void {
     resetAbsenSore();
   });
 
-  // Sore: Jam 16:00
-  cron.schedule("0 16 * * *", () => {
+  // Sore: Jam 17:00
+  cron.schedule("0 17 * * *", () => {
     console.log("🌆 Sore - Mengirim reminder absen sore...");
     sendReminder(sock, "sore");
   });

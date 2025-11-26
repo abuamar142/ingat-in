@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  ingat-in-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: ingat-in-bot-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Hot reload
+      - ./src:/app/src
+      - ./auth_info:/app/auth_info
+      - ./data:/app/data
+      - ./logs:/app/logs
+      # Exclude node_modules
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - TZ=Asia/Jakarta
+    command: npm run dev
+    networks:
+      - ingat-in-network
+
+networks:
+  ingat-in-network:
+    driver: bridge

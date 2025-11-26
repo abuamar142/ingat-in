@@ -11,13 +11,17 @@ auth_info/
 # User Data (SENSITIVE - DO NOT COMMIT)
 data/
 
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Docker
+backups/
+
 # Environment Variables
 .env
 .env.local
-
-# Logs
-*.log
-npm-debug.log*
 
 # OS
 .DS_Store
