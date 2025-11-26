@@ -7,6 +7,9 @@ export async function sendReminder(
   type: ReminderType = "pagi"
 ): Promise<void> {
   const users = loadUsers();
+  
+  console.log(`📤 Memproses reminder ${type}...`);
+  console.log(`👥 Total users: ${users.length}`);
 
   const link =
     type === "pagi"
@@ -14,10 +17,14 @@ export async function sendReminder(
       : "https://link-absen-mu.com/sore";
 
   let batch: User[] = [];
+  let skipCount = 0;
 
   for (const user of users) {
     const status = type === "pagi" ? user.absen_pagi : user.absen_sore;
-    if (status) continue; // sudah absen
+    if (status) {
+      skipCount++;
+      continue; // sudah absen
+    }
 
     batch.push(user);
 
@@ -31,6 +38,10 @@ export async function sendReminder(
   if (batch.length > 0) {
     await sendBatch(sock, batch, link);
   }
+  
+  console.log(`✅ Reminder ${type} selesai:`);
+  console.log(`   - Terkirim: ${users.length - skipCount} user`);
+  console.log(`   - Dilewati (sudah absen): ${skipCount} user\n`);
 }
 
 async function sendBatch(
@@ -39,9 +50,14 @@ async function sendBatch(
   link: string
 ): Promise<void> {
   for (const u of batch) {
-    await sock.sendMessage(u.number, {
-      text: `Reminder absen ${link}\nKetik *sudah* jika sudah absen.`,
-    });
-    await delay(1200); // delay aman
+    try {
+      await sock.sendMessage(u.number, {
+        text: `Reminder absen ${link}\nKetik *sudah* jika sudah absen.`,
+      });
+      console.log(`   ✓ Terkirim ke ${u.number}`);
+      await delay(1200); // delay aman
+    } catch (error) {
+      console.error(`   ✗ Gagal kirim ke ${u.number}:`, error instanceof Error ? error.message : error);
+    }
   }
 }

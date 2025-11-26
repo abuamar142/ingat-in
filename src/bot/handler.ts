@@ -1,4 +1,5 @@
-import { addUser, updateUser } from "../utils/db.js";
+import { addUser, updateUser, loadUsers } from "../utils/db.js";
+import { resetAbsenPagi, resetAbsenSore, resetAllAbsen } from "../scheduler/reset.js";
 import type { BotSocket, WAMessage } from "../types/index.js";
 
 export async function handleIncoming(
@@ -19,24 +20,107 @@ export async function handleIncoming(
     });
   }
 
-  // User bilang SUDAH → checklist absen
+  // User bilang SUDAH → checklist absen berdasarkan waktu
   if (text.includes("sudah")) {
-    updateUser(from, {
-      absen_pagi: true,
-      absen_sore: true, // contoh: bisa dipisah sesuai jam
-      last_checkin: new Date().toISOString(),
-    });
+    const hour = new Date().getHours();
+    const update: any = { last_checkin: new Date().toISOString() };
 
+    // Pagi (06:00 - 11:59)
+    if (hour >= 6 && hour < 12) {
+      update.absen_pagi = true;
+    }
+    // Sore (12:00 - 23:59)
+    else if (hour >= 12) {
+      update.absen_sore = true;
+    }
+    // Malam/dini hari - set keduanya
+    else {
+      update.absen_pagi = true;
+      update.absen_sore = true;
+    }
+
+    updateUser(from, update);
+
+    const waktu = hour >= 6 && hour < 12 ? "pagi" : hour >= 12 ? "sore" : "";
     await sock.sendMessage(from, {
-      text: "Terima kasih! Absen kamu sudah dicatat.",
+      text: `✅ Terima kasih! Absen ${waktu} kamu sudah dicatat.`,
     });
   }
 
-  if (text === "menu") {
+  if (text === "menu" || text === "help") {
     await sock.sendMessage(from, {
-      text: `Menu:
-1. halo
-2. sudah (untuk checklist absen)`,
+      text: `📋 *Menu Ingat-In Bot*
+
+*User Commands:*
+• halo - Daftar untuk reminder
+• sudah - Konfirmasi sudah absen
+• status - Cek status absen kamu
+• menu/help - Lihat menu ini
+
+*Admin Commands:*
+• reset pagi - Reset absen pagi
+• reset sore - Reset absen sore
+• reset all - Reset semua absen
+• stats - Lihat statistik`,
+    });
+  }
+
+  if (text === "status") {
+    const users = loadUsers();
+    const user = users.find((u) => u.number === from);
+
+    if (user) {
+      const pagiStatus = user.absen_pagi ? "✅ Sudah" : "❌ Belum";
+      const soreStatus = user.absen_sore ? "✅ Sudah" : "❌ Belum";
+      const lastCheckin = user.last_checkin
+        ? new Date(user.last_checkin).toLocaleString("id-ID")
+        : "Belum pernah";
+
+      await sock.sendMessage(from, {
+        text: `📊 *Status Absen Kamu*
+
+Absen Pagi: ${pagiStatus}
+Absen Sore: ${soreStatus}
+Last Check-in: ${lastCheckin}`,
+      });
+    }
+  }
+
+  // Admin commands
+  if (text === "reset pagi") {
+    resetAbsenPagi();
+    await sock.sendMessage(from, {
+      text: "🔄 Absen pagi berhasil direset untuk semua user.",
+    });
+  }
+
+  if (text === "reset sore") {
+    resetAbsenSore();
+    await sock.sendMessage(from, {
+      text: "🔄 Absen sore berhasil direset untuk semua user.",
+    });
+  }
+
+  if (text === "reset all") {
+    resetAllAbsen();
+    await sock.sendMessage(from, {
+      text: "🔄 Semua absen berhasil direset untuk semua user.",
+    });
+  }
+
+  if (text === "stats") {
+    const users = loadUsers();
+    const totalUsers = users.length;
+    const absenPagiCount = users.filter((u) => u.absen_pagi).length;
+    const absenSoreCount = users.filter((u) => u.absen_sore).length;
+
+    await sock.sendMessage(from, {
+      text: `📊 *Statistik Absensi*
+
+Total Users: ${totalUsers}
+Absen Pagi: ${absenPagiCount}/${totalUsers}
+Absen Sore: ${absenSoreCount}/${totalUsers}
+Dashboard: http://localhost:3000`,
     });
   }
 }
