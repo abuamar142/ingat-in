@@ -1,5 +1,6 @@
 import { addUser, updateUser, loadUsers } from "../utils/db.js";
 import { resetAbsenPagi, resetAbsenSore, resetAllAbsen } from "../scheduler/reset.js";
+import { broadcastUpdate } from "../web/server.js";
 import type { BotSocket, WAMessage } from "../types/index.js";
 
 export async function handleIncoming(
@@ -13,6 +14,7 @@ export async function handleIncoming(
 
   // Simpan user baru
   addUser(from);
+  broadcastUpdate(); // Broadcast ke dashboard
 
   if (text === "halo") {
     await sock.sendMessage(from, {
@@ -40,6 +42,7 @@ export async function handleIncoming(
     }
 
     updateUser(from, update);
+    broadcastUpdate(); // Broadcast ke dashboard
 
     const waktu = hour >= 6 && hour < 12 ? "pagi" : hour >= 12 ? "sore" : "";
     await sock.sendMessage(from, {
@@ -89,6 +92,7 @@ Last Check-in: ${lastCheckin}`,
   // Admin commands
   if (text === "reset pagi") {
     resetAbsenPagi();
+    broadcastUpdate(); // Broadcast ke dashboard
     await sock.sendMessage(from, {
       text: "🔄 Absen pagi berhasil direset untuk semua user.",
     });
@@ -96,6 +100,7 @@ Last Check-in: ${lastCheckin}`,
 
   if (text === "reset sore") {
     resetAbsenSore();
+    broadcastUpdate(); // Broadcast ke dashboard
     await sock.sendMessage(from, {
       text: "🔄 Absen sore berhasil direset untuk semua user.",
     });
@@ -103,6 +108,7 @@ Last Check-in: ${lastCheckin}`,
 
   if (text === "reset all") {
     resetAllAbsen();
+    broadcastUpdate(); // Broadcast ke dashboard
     await sock.sendMessage(from, {
       text: "🔄 Semua absen berhasil direset untuk semua user.",
     });

@@ -1,4 +1,5 @@
 import { loadUsers, saveUsers } from "../utils/db.js";
+import { broadcastUpdate } from "../web/server.js";
 
 /**
  * Reset status absen pagi untuk semua user
@@ -10,6 +11,7 @@ export function resetAbsenPagi(): void {
   });
   saveUsers(users);
   console.log(`🔄 Reset absen pagi untuk ${users.length} user`);
+  broadcastUpdate();
 }
 
 /**
@@ -22,6 +24,7 @@ export function resetAbsenSore(): void {
   });
   saveUsers(users);
   console.log(`🔄 Reset absen sore untuk ${users.length} user`);
+  broadcastUpdate();
 }
 
 /**
@@ -35,4 +38,5 @@ export function resetAllAbsen(): void {
   });
   saveUsers(users);
   console.log(`🔄 Reset semua absen untuk ${users.length} user`);
+  broadcastUpdate();
 }

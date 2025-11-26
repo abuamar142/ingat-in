@@ -21,16 +21,23 @@ Scan QR code di terminal dengan WhatsApp.
 
 ## Dashboard
 
-Web dashboard menampilkan:
-- Total users terdaftar
-- Statistik absen pagi/sore
-- Daftar lengkap users dan status absen
-- Auto-refresh setiap 30 detik
+Web dashboard dengan **real-time updates** menggunakan WebSocket:
+
+**Fitur:**
+- 🎨 Modern UI dengan Tailwind CSS
+- 🔄 Real-time auto-update via WebSocket
+- 📊 Live statistics (total users, absen pagi/sore)
+- 👥 Daftar lengkap users dengan status absen
+- 📈 Progress bar visual untuk persentase absen
+- 🟢 Live status indicator
+- ⏰ Timestamp last update
+- 📱 Responsive design untuk mobile
 
 **Endpoints:**
 - `GET /` - Dashboard UI
 - `GET /api/users` - Data semua users
 - `GET /api/stats` - Statistik absensi
+- `WebSocket` - Real-time updates
 
 ## Bot Commands
 
