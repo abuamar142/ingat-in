@@ -1,8 +1,30 @@
 # Dependencies
-node_modules
+node_modules/
+
+# TypeScript Build Output
+dist/
+*.tsbuildinfo
 
 # WhatsApp Authentication (SENSITIVE - DO NOT COMMIT)
 auth_info/
 
 # User Data (SENSITIVE - DO NOT COMMIT)
 data/
+
+# Environment Variables
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

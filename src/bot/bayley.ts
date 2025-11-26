@@ -5,8 +5,9 @@ import makeWASocket, {
 } from "@whiskeysockets/baileys";
 import { handleIncoming } from "./handler.js";
 import qrcode from "qrcode-terminal";
+import type { BotSocket } from "../types/index.js";
 
-export async function startBot() {
+export async function startBot(): Promise<BotSocket> {
   const { state, saveCreds } = await useMultiFileAuthState("auth_info");
   const { version } = await fetchLatestBaileysVersion();
 
@@ -33,7 +34,7 @@ export async function startBot() {
     }
 
     if (connection === "close") {
-      const statusCode = lastDisconnect?.error?.output?.statusCode;
+      const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
       const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
       console.log("\n⚠️  Koneksi terputus!");

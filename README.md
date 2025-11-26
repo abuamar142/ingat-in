@@ -1,56 +1,40 @@
-# Ingat-In - WhatsApp Bot Reminder
+# Ingat-In Bot
 
-Bot WhatsApp untuk reminder absen pagi dan sore otomatis.
+Bot WhatsApp untuk reminder absen otomatis.
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
-# Install dependencies
 npm install
-
-# Jalankan bot
-node index.js
-
-# Scan QR code yang muncul di terminal dengan WhatsApp
+npm run dev
 ```
 
-## 💬 Perintah Bot
+Scan QR code di terminal dengan WhatsApp.
 
-- `halo` - Daftar untuk reminder
-- `sudah` - Konfirmasi sudah absen
-- `menu` - Lihat perintah
+## Commands
 
-## ⚙️ Jadwal Reminder
+- `npm run dev` - Development mode
+- `npm run build` - Compile TypeScript
+- `npm start` - Production mode
 
-- **Pagi**: 06:00
-- **Sore**: 16:00
-- **Ulang**: Setiap 5 menit
+## Bot Commands
 
-Edit jadwal di `scheduler/cron.js`
+- `halo` - Daftar reminder
+- `sudah` - Konfirmasi absen
+- `menu` - Lihat command
 
-## 🔧 Troubleshooting
+## Konfigurasi
 
-### Error 405
+**Jadwal Reminder** → `src/scheduler/cron.ts`
+
+```typescript
+cron.schedule("0 6 * * *", () => sendReminder(sock, "pagi"));
+```
+
+**Link Absen** → `src/scheduler/reminder.ts`
+
+## Reset Session
 
 ```bash
-# Hapus session dan coba lagi
-rm -rf auth_info
-node index.js
+rm -rf auth_info/
 ```
-
-Atau:
-
-- Tunggu beberapa menit
-- Ganti koneksi internet
-- Tutup WhatsApp Web di browser
-
-### Bot tidak respon
-
-- Pastikan ada pesan "✅ Bot berhasil terhubung"
-- Restart bot (Ctrl+C lalu `node index.js`)
-
-## 📁 File Penting
-
-- `data/users.json` - Data user terdaftar
-- `auth_info/` - Session WhatsApp
-- `scheduler/cron.js` - Atur jadwal reminder

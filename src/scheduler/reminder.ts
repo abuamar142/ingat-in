@@ -1,13 +1,19 @@
-import { loadUsers, updateUser } from "../utils/db.js";
+import { loadUsers } from "../utils/db.js";
 import { delay } from "../utils/delay.js";
+import type { BotSocket, User, ReminderType } from "../types/index.js";
 
-export async function sendReminder(sock, type = "pagi") {
+export async function sendReminder(
+  sock: BotSocket,
+  type: ReminderType = "pagi"
+): Promise<void> {
   const users = loadUsers();
 
   const link =
-    type === "pagi" ? "https://link-absen-mu.com/pagi" : "https://link-absen-mu.com/sore";
+    type === "pagi"
+      ? "https://link-absen-mu.com/pagi"
+      : "https://link-absen-mu.com/sore";
 
-  let batch = [];
+  let batch: User[] = [];
 
   for (const user of users) {
     const status = type === "pagi" ? user.absen_pagi : user.absen_sore;
@@ -27,7 +33,11 @@ export async function sendReminder(sock, type = "pagi") {
   }
 }
 
-async function sendBatch(sock, batch, link) {
+async function sendBatch(
+  sock: BotSocket,
+  batch: User[],
+  link: string
+): Promise<void> {
   for (const u of batch) {
     await sock.sendMessage(u.number, {
       text: `Reminder absen ${link}\nKetik *sudah* jika sudah absen.`,
