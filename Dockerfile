@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Install dependencies untuk Baileys
 RUN apk add --no-cache \
@@ -16,14 +16,19 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies
+RUN npm ci
 
 # Copy source code
 COPY . .
 
 # Build TypeScript
 RUN npm run build
+
+# Copy HTML file to dist
+RUN mkdir -p dist/web/public && cp -r src/web/public/* dist/web/public/
+
+RUN npm prune --production
 
 # Create directories for volumes
 RUN mkdir -p auth_info data logs
