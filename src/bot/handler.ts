@@ -1,11 +1,14 @@
 import { addUser, updateUser, loadUsers } from "../utils/db.js";
-import { resetAbsenPagi, resetAbsenSore, resetAllAbsen } from "../scheduler/reset.js";
-import { broadcastUpdate } from "../web/server.js";
+import {
+  resetAbsenPagi,
+  resetAbsenSore,
+  resetAllAbsen,
+} from "../scheduler/reset.js";
 import type { BotSocket, WAMessage } from "../types/index.js";
 
 export async function handleIncoming(
   sock: BotSocket,
-  msg: WAMessage
+  msg: WAMessage,
 ): Promise<void> {
   const from = msg.key.remoteJid;
   const text = msg.message?.conversation?.toLowerCase();
@@ -13,8 +16,7 @@ export async function handleIncoming(
   if (!from || !text) return;
 
   // Simpan user baru
-  addUser(from);
-  broadcastUpdate(); // Broadcast ke dashboard
+  await addUser(from);
 
   if (text === "halo") {
     await sock.sendMessage(from, {
@@ -41,8 +43,7 @@ export async function handleIncoming(
       update.absen_sore = true;
     }
 
-    updateUser(from, update);
-    broadcastUpdate(); // Broadcast ke dashboard
+    await updateUser(from, update);
 
     const waktu = hour >= 6 && hour < 12 ? "pagi" : hour >= 12 ? "sore" : "";
     await sock.sendMessage(from, {
@@ -69,7 +70,7 @@ export async function handleIncoming(
   }
 
   if (text === "status") {
-    const users = loadUsers();
+    const users = await loadUsers();
     const user = users.find((u) => u.number === from);
 
     if (user) {
@@ -91,31 +92,28 @@ Last Check-in: ${lastCheckin}`,
 
   // Admin commands
   if (text === "reset pagi") {
-    resetAbsenPagi();
-    broadcastUpdate(); // Broadcast ke dashboard
+    await resetAbsenPagi();
     await sock.sendMessage(from, {
       text: "🔄 Absen pagi berhasil direset untuk semua user.",
     });
   }
 
   if (text === "reset sore") {
-    resetAbsenSore();
-    broadcastUpdate(); // Broadcast ke dashboard
+    await resetAbsenSore();
     await sock.sendMessage(from, {
       text: "🔄 Absen sore berhasil direset untuk semua user.",
     });
   }
 
   if (text === "reset all") {
-    resetAllAbsen();
-    broadcastUpdate(); // Broadcast ke dashboard
+    await resetAllAbsen();
     await sock.sendMessage(from, {
       text: "🔄 Semua absen berhasil direset untuk semua user.",
     });
   }
 
   if (text === "stats") {
-    const users = loadUsers();
+    const users = await loadUsers();
     const totalUsers = users.length;
     const absenPagiCount = users.filter((u) => u.absen_pagi).length;
     const absenSoreCount = users.filter((u) => u.absen_sore).length;

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ingat-In Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
       tailwind.config = {
         theme: {
@@ -120,37 +120,64 @@
     </div>
 
     <script>
-      let updateInterval = null;
       let isLoading = false;
-      let socket = null;
+      let supabaseClient = null;
+      let realtimeChannel = null;
 
-      // Initialize Socket.IO
-      function initSocket() {
-        socket = io();
+      // Get Supabase config from meta tags (will be injected by server)
+      // For now, we'll fetch it from the API endpoint
+      async function getSupabaseConfig() {
+        try {
+          const response = await fetch('/api/config');
+          if (response.ok) {
+            return await response.json();
+          }
+        } catch (e) {
+          console.warn('Could not fetch Supabase config from API');
+        }
+        return null;
+      }
 
-        socket.on('connect', () => {
-          console.log('✅ Connected to server');
-          document.getElementById('status-indicator').className = 'w-3 h-3 bg-green-400 rounded-full animate-pulse';
-          document.getElementById('status-text').textContent = 'Live';
-        });
-
-        socket.on('disconnect', () => {
-          console.log('❌ Disconnected from server');
-          document.getElementById('status-indicator').className = 'w-3 h-3 bg-red-400 rounded-full';
-          document.getElementById('status-text').textContent = 'Offline';
-        });
-
-        // Listen for stats updates
-        socket.on('stats', (data) => {
-          console.log('📊 Stats updated:', data);
-          updateStats(data);
-        });
-
-        // Listen for users updates
-        socket.on('users', (data) => {
-          console.log('👥 Users updated:', data.length, 'users');
-          updateUsersTable(data);
-        });
+      // Initialize Supabase client and realtime subscription
+      async function initSupabase() {
+        const config = await getSupabaseConfig();
+        
+        if (config && config.supabaseUrl && config.supabaseAnonKey) {
+          const { createClient } = supabase;
+          supabaseClient = createClient(config.supabaseUrl, config.supabaseAnonKey);
+          
+          // Subscribe to realtime changes
+          realtimeChannel = supabaseClient
+            .channel('users-changes')
+            .on(
+              'postgres_changes',
+              {
+                event: '*',
+                schema: 'public',
+                table: 'users'
+              },
+              (payload) => {
+                console.log('🔔 Realtime update:', payload.eventType);
+                // Reload data when there's a change
+                loadData(false);
+              }
+            )
+            .subscribe((status) => {
+              if (status === 'SUBSCRIBED') {
+                console.log('✅ Subscribed to Supabase realtime');
+                document.getElementById('status-indicator').className = 'w-3 h-3 bg-green-400 rounded-full animate-pulse';
+                document.getElementById('status-text').textContent = 'Live';
+              } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                console.warn('⚠️ Realtime connection issue:', status);
+                document.getElementById('status-indicator').className = 'w-3 h-3 bg-yellow-400 rounded-full';
+                document.getElementById('status-text').textContent = 'Polling';
+              }
+            });
+        } else {
+          console.log('ℹ️ Supabase realtime not configured, using polling mode');
+          document.getElementById('status-indicator').className = 'w-3 h-3 bg-yellow-400 rounded-full';
+          document.getElementById('status-text').textContent = 'Polling';
+        }
       }
 
       function updateStats(data) {
@@ -310,13 +337,13 @@
       }
 
       // Initialize
-      initSocket();
+      initSupabase();
       loadData();
 
-      // Fallback: Auto refresh every 30 seconds if socket fails
-      updateInterval = setInterval(() => {
-        if (!socket || !socket.connected) {
-          console.log('🔄 Socket disconnected, using fallback polling...');
+      // Fallback: Auto refresh every 30 seconds for polling mode
+      setInterval(() => {
+        if (!realtimeChannel || realtimeChannel.state !== 'joined') {
+          console.log('🔄 Polling mode: refreshing data...');
           loadData(false);
         }
       }, 30000);
@@ -326,8 +353,9 @@
 
       // Cleanup on page unload
       window.addEventListener('beforeunload', () => {
-        if (updateInterval) clearInterval(updateInterval);
-        if (socket) socket.disconnect();
+        if (realtimeChannel) {
+          supabaseClient.removeChannel(realtimeChannel);
+        }
       });
     </script>
   </body>

@@ -2,8 +2,11 @@ import { loadUsers } from "../utils/db.js";
 import { delay } from "../utils/delay.js";
 import type { BotSocket, User, ReminderType } from "../types/index.js";
 
-export async function sendReminder(sock: BotSocket, type: ReminderType = "pagi"): Promise<void> {
-  const users = loadUsers();
+export async function sendReminder(
+  sock: BotSocket,
+  type: ReminderType = "pagi",
+): Promise<void> {
+  const users = await loadUsers();
 
   console.log(`📤 Memproses reminder ${type}...`);
   console.log(`👥 Total users: ${users.length}`);
@@ -41,7 +44,11 @@ export async function sendReminder(sock: BotSocket, type: ReminderType = "pagi")
   console.log(`   - Dilewati (sudah absen): ${skipCount} user\n`);
 }
 
-async function sendBatch(sock: BotSocket, batch: User[], link: string): Promise<void> {
+async function sendBatch(
+  sock: BotSocket,
+  batch: User[],
+  link: string,
+): Promise<void> {
   for (const u of batch) {
     try {
       await sock.sendMessage(u.number, {
@@ -52,7 +59,7 @@ async function sendBatch(sock: BotSocket, batch: User[], link: string): Promise<
     } catch (error) {
       console.error(
         `   ✗ Gagal kirim ke ${u.number}:`,
-        error instanceof Error ? error.message : error
+        error instanceof Error ? error.message : error,
       );
     }
   }
