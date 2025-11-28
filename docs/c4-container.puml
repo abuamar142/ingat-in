@@ -1,0 +1,31 @@
+@startuml C4_Container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Container Diagram - Ingat-in Application
+
+Person(user, "User", "Pengguna dari System Ingat-in")
+Person(admin, "Admin", "Administrator dari System Ingat-in")
+
+System_Boundary(ingatin, "Ingat-in System") {
+    Container(wa_bot, "WA Bot", "Node.js, TypeScript, Baileys", "Automated WhatsApp Messaging & Reminder")
+    Container(dashboard, "Dashboard", "React/Next.js", "Data Visualization & CMS")
+    ContainerDb(database, "Database", "Supabase PostgreSQL", "Stores user data, absen status, and logs")
+}
+
+System_Ext(whatsapp, "WhatsApp API", "Message delivery")
+System_Ext(supabase, "Supabase", "Database & Real-time service")
+
+Rel(user, wa_bot, "Receives reminders & sends confirmation", "WhatsApp")
+Rel(admin, dashboard, "Manages users & monitors system", "HTTPS")
+
+Rel(wa_bot, whatsapp, "Send/Receive Messages", "WebSocket/HTTP")
+Rel(wa_bot, database, "Read/Write user & absen data", "HTTPS/REST")
+Rel(dashboard, database, "Query & Update data", "HTTPS/REST")
+
+Rel(database, supabase, "Hosted on", "PostgreSQL Protocol")
+Rel(whatsapp, supabase, "Log Messages")
+Rel(supabase, wa_bot, "Real-time Sync")
+
+@enduml

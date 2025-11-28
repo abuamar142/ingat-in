@@ -1,0 +1,7 @@
+@startuml C4_All
+
+!include c4-context.puml
+!include c4-container.puml
+!include c4-component.puml
+
+@enduml

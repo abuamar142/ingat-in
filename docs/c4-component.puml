@@ -1,0 +1,37 @@
+@startuml C4_Component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Component Diagram - WA Bot Container
+
+Person(user, "User", "Pengguna dari System Ingat-in")
+
+Container_Boundary(wa_bot, "WA Bot") {
+    Component(bot_handler, "Bot Handler", "TypeScript", "Manages WhatsApp connection & authentication")
+    Component(message_handler, "Message Handler", "TypeScript", "Processes incoming messages & commands")
+    Component(scheduler, "Scheduler Service", "Node-cron", "Runs scheduled tasks (reminder, reset)")
+    Component(reminder_service, "Reminder Service", "TypeScript", "Sends reminder messages to users")
+    Component(reset_service, "Reset Service", "TypeScript", "Resets absen status periodically")
+}
+
+ContainerDb(database, "Database", "Supabase PostgreSQL", "Stores user data")
+System_Ext(whatsapp, "WhatsApp API", "Message delivery")
+
+Rel(user, whatsapp, "Sends confirmation message", "WhatsApp")
+Rel(whatsapp, bot_handler, "Forwards incoming messages", "WebSocket")
+
+Rel(bot_handler, message_handler, "Passes message for processing")
+Rel(message_handler, database, "Update absen status", "HTTPS/REST")
+Rel(message_handler, bot_handler, "Send response message")
+Rel(bot_handler, whatsapp, "Send WhatsApp message", "WebSocket")
+
+Rel(scheduler, reminder_service, "Trigger reminder (08:00, 17:00)", "Internal")
+Rel(scheduler, reset_service, "Trigger reset (00:00)", "Internal")
+
+Rel(reminder_service, database, "Get users who haven't absen", "HTTPS/REST")
+Rel(reminder_service, bot_handler, "Send reminder to users", "Internal")
+
+Rel(reset_service, database, "Reset all absen status", "HTTPS/REST")
+
+@enduml

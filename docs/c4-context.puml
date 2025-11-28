@@ -1,0 +1,25 @@
+@startuml C4_Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title System Context Diagram - Ingat-in Application
+
+Person(user, "User", "Pengguna dari System Ingat-in")
+Person(admin, "Admin", "Administrator dari System Ingat-in")
+
+System(ingatin, "Ingat-in System", "WA Bot & Dashboard untuk reminder absen otomatis")
+
+System_Ext(whatsapp, "WhatsApp API", "Message delivery platform")
+System_Ext(supabase, "Supabase", "Database & Real-time service")
+
+Rel(user, ingatin, "Receives reminders & sends confirmation", "WhatsApp")
+Rel(admin, ingatin, "Manages users & monitors system", "HTTPS")
+
+Rel(ingatin, whatsapp, "Send/Receive Messages", "WebSocket/HTTP")
+Rel(ingatin, supabase, "Store & Query Data", "HTTPS/REST")
+
+Rel(whatsapp, supabase, "Log Messages")
+Rel(supabase, ingatin, "Real-time Sync")
+
+@enduml
