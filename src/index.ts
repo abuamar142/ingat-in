@@ -1,9 +1,8 @@
 import { startBot } from "./bot/bayley.js";
 import { startCron } from "./scheduler/cron.js";
-import { startWebServer } from "./web/server.js";
 import { testSupabaseConnection } from "./utils/supabase.js";
 
-// Make sure Supabase connection is valid before starting the app
+// Test Supabase connection before starting
 console.log("🔍 Testing Supabase connection...");
 testSupabaseConnection().then((success) => {
   if (!success) {
@@ -16,12 +15,12 @@ testSupabaseConnection().then((success) => {
     process.exit(1);
   }
 
-  // Start web dashboard
-  startWebServer();
+  console.log("✅ Supabase connection successful");
+  console.log("🤖 Starting WhatsApp bot...\n");
 
   // Start WhatsApp bot
   startBot().then((sock) => {
-    console.log("Bot berjalan...");
+    console.log("✅ Bot berjalan...");
     startCron(sock);
   });
 });
