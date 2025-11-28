@@ -12,8 +12,8 @@ export function startCron(sock: BotSocket): void {
     resetAbsenPagi();
   });
 
-  // Pagi: Jam 06:00
-  cron.schedule("0 6 * * *", () => {
+  // Pagi: Jam 08:00
+  cron.schedule("0 8 * * *", () => {
     console.log("🌅 Pagi - Mengirim reminder absen pagi...");
     sendReminder(sock, "pagi");
   });
