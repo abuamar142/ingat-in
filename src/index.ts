@@ -6,12 +6,8 @@ import { testSupabaseConnection } from "./utils/supabase.js";
 console.log("🔍 Testing Supabase connection...");
 testSupabaseConnection().then((success) => {
   if (!success) {
-    console.error(
-      "⚠️ Warning: Supabase connection failed. Please check your .env configuration.",
-    );
-    console.error(
-      "📝 Make sure SUPABASE_URL and SUPABASE_ANON_KEY are set correctly.",
-    );
+    console.error("⚠️ Warning: Supabase connection failed. Please check your .env configuration.");
+    console.error("📝 Make sure SUPABASE_URL and SUPABASE_ANON_KEY are set correctly.");
     process.exit(1);
   }
 

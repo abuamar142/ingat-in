@@ -1,130 +1,114 @@
-import { addUser, updateUser, loadUsers } from "../utils/db.js";
-import {
-  resetAbsenPagi,
-  resetAbsenSore,
-  resetAllAbsen,
-} from "../scheduler/reset.js";
+import { isUserExists } from "../utils/db.js";
 import type { BotSocket, WAMessage } from "../types/index.js";
+import { handleGreeting, handleMenu } from "./commands/public.js";
+import { handleCheckin, handleStatus, handleStats, handleSuspend } from "./commands/auth.js";
+import {
+  startRegistration,
+  handleRegistrationInput,
+  isInRegistration,
+} from "./commands/registration.js";
+import { handleAdminCommand } from "./commands/admin.js";
+import { PUBLIC_COMMANDS, AUTH_COMMANDS, type PublicCommand } from "../constants/constants.js";
 
-export async function handleIncoming(
-  sock: BotSocket,
-  msg: WAMessage,
-): Promise<void> {
+function isPublicCommand(text: string): text is PublicCommand {
+  return PUBLIC_COMMANDS.includes(text as PublicCommand);
+}
+
+function isAuthCommand(text: string): boolean {
+  // Check exact match atau command dengan parameter (contoh: "suspend 30")
+  return AUTH_COMMANDS.some((cmd) => text === cmd || text.startsWith(`${cmd} `));
+}
+
+export async function handleIncoming(sock: BotSocket, msg: WAMessage): Promise<void> {
   const from = msg.key.remoteJid;
-  const text = msg.message?.conversation?.toLowerCase();
+  const rawText = msg.message?.conversation;
 
-  if (!from || !text) return;
+  if (!from || !rawText) return;
 
-  // Simpan user baru
-  await addUser(from);
+  const text = rawText.trim().toLowerCase();
 
-  if (text === "halo") {
-    await sock.sendMessage(from, {
-      text: "Halo! Kamu sudah terdaftar untuk reminder absen.",
-    });
+  // Priority 0: Handle admin commands first
+  const isAdminHandled = await handleAdminCommand(sock, from, text);
+  if (isAdminHandled) {
+    return;
   }
 
-  // User bilang SUDAH → checklist absen berdasarkan waktu
-  if (text.includes("sudah")) {
-    const hour = new Date().getHours();
-    const update: any = { last_checkin: new Date().toISOString() };
-
-    // Pagi (06:00 - 11:59)
-    if (hour >= 6 && hour < 12) {
-      update.absen_pagi = true;
-    }
-    // Sore (12:00 - 23:59)
-    else if (hour >= 12) {
-      update.absen_sore = true;
-    }
-    // Malam/dini hari - set keduanya
-    else {
-      update.absen_pagi = true;
-      update.absen_sore = true;
-    }
-
-    await updateUser(from, update);
-
-    const waktu = hour >= 6 && hour < 12 ? "pagi" : hour >= 12 ? "sore" : "";
-    await sock.sendMessage(from, {
-      text: `✅ Terima kasih! Absen ${waktu} kamu sudah dicatat.`,
-    });
+  // Priority 1: Handle registrasi yang sedang berjalan
+  if (isInRegistration(from)) {
+    await handleRegistrationInput(sock, from, rawText.trim());
+    return;
   }
 
-  if (text === "menu" || text === "help") {
-    await sock.sendMessage(from, {
-      text: `📋 *Menu Ingat-In Bot*
-
-*User Commands:*
-• halo - Daftar untuk reminder
-• sudah - Konfirmasi sudah absen
-• status - Cek status absen kamu
-• menu/help - Lihat menu ini
-
-*Admin Commands:*
-• reset pagi - Reset absen pagi
-• reset sore - Reset absen sore
-• reset all - Reset semua absen
-• stats - Lihat statistik`,
-    });
+  // Priority 2: Handle public commands
+  if (isPublicCommand(text)) {
+    await handlePublicCommand(sock, from, text);
+    return;
   }
 
-  if (text === "status") {
-    const users = await loadUsers();
-    const user = users.find((u) => u.number === from);
-
-    if (user) {
-      const pagiStatus = user.absen_pagi ? "✅ Sudah" : "❌ Belum";
-      const soreStatus = user.absen_sore ? "✅ Sudah" : "❌ Belum";
-      const lastCheckin = user.last_checkin
-        ? new Date(user.last_checkin).toLocaleString("id-ID")
-        : "Belum pernah";
-
-      await sock.sendMessage(from, {
-        text: `📊 *Status Absen Kamu*
-
-Absen Pagi: ${pagiStatus}
-Absen Sore: ${soreStatus}
-Last Check-in: ${lastCheckin}`,
-      });
-    }
+  // Priority 3: Handle auth commands (perlu cek user exists)
+  if (isAuthCommand(text)) {
+    await handleAuthCommand(sock, from, text);
+    return;
   }
 
-  // Admin commands
-  if (text === "reset pagi") {
-    await resetAbsenPagi();
+  // Default: Unknown command
+  await sock.sendMessage(from, {
+    text: "❓ Command tidak dikenali. Ketik 'menu' atau 'help' untuk melihat daftar command.",
+  });
+}
+
+async function handlePublicCommand(
+  sock: BotSocket,
+  from: string,
+  command: PublicCommand
+): Promise<void> {
+  switch (command) {
+    case "halo":
+    case "hi":
+    case "hello":
+      await handleGreeting(sock, from);
+      break;
+
+    case "daftar":
+      await startRegistration(sock, from);
+      break;
+
+    case "menu":
+    case "help":
+      await handleMenu(sock, from);
+      break;
+  }
+}
+
+async function handleAuthCommand(sock: BotSocket, from: string, text: string): Promise<void> {
+  // Cek apakah user sudah terdaftar
+  const user = await isUserExists(from);
+
+  if (!user) {
     await sock.sendMessage(from, {
-      text: "🔄 Absen pagi berhasil direset untuk semua user.",
+      text: "⚠️ Kamu belum terdaftar. Ketik 'daftar' untuk mendaftar terlebih dahulu.",
     });
+    return;
   }
 
-  if (text === "reset sore") {
-    await resetAbsenSore();
+  // Cek apakah user sudah melengkapi nama
+  if (!user.name) {
     await sock.sendMessage(from, {
-      text: "🔄 Absen sore berhasil direset untuk semua user.",
+      text: "⚠️ Registrasi kamu belum lengkap. Silakan masukkan nama kamu terlebih dahulu:",
     });
+    return;
   }
 
-  if (text === "reset all") {
-    await resetAllAbsen();
-    await sock.sendMessage(from, {
-      text: "🔄 Semua absen berhasil direset untuk semua user.",
-    });
-  }
-
-  if (text === "stats") {
-    const users = await loadUsers();
-    const totalUsers = users.length;
-    const absenPagiCount = users.filter((u) => u.absen_pagi).length;
-    const absenSoreCount = users.filter((u) => u.absen_sore).length;
-
-    await sock.sendMessage(from, {
-      text: `📊 *Statistik Absensi*
-
-Total Users: ${totalUsers}
-Absen Pagi: ${absenPagiCount}/${totalUsers}
-Absen Sore: ${absenSoreCount}/${totalUsers}
-Dashboard: http://localhost:3000`,
-    });
+  // Handle command berdasarkan jenis
+  if (text === "sudah") {
+    await handleCheckin(sock, from, user);
+  } else if (text === "status") {
+    await handleStatus(sock, from, user);
+  } else if (text === "stats") {
+    await handleStats(sock, from);
+  } else if (text.startsWith("suspend ")) {
+    const minutesStr = text.replace("suspend ", "").trim();
+    const minutes = parseInt(minutesStr, 10);
+    await handleSuspend(sock, from, user, minutes);
   }
 }

@@ -17,13 +17,36 @@ export async function loadUsers(): Promise<User[]> {
     // Map Supabase user format to our User type
     return (data || []).map((user: SupabaseUser) => ({
       number: user.number,
+      name: user.name,
       absen_pagi: user.absen_pagi,
       absen_sore: user.absen_sore,
       last_checkin: user.last_checkin || null,
+      suspend_until: user.suspend_until || null,
     }));
   } catch (error) {
     console.error("❌ Unexpected error loading users:", error);
     return [];
+  }
+}
+
+// Is user exists in Supabase
+export async function isUserExists(number: string): Promise<User | null> {
+  try {
+    const { data, error } = await supabase.from("users").select("*").eq("number", number).single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        // No rows found
+        return null;
+      }
+      console.error("❌ Error checking user existence in Supabase:", error);
+      return null;
+    }
+
+    return data as User;
+  } catch (error) {
+    console.error("❌ Unexpected error checking user existence:", error);
+    return null;
   }
 }
 
@@ -62,10 +85,7 @@ export async function addUser(number: string): Promise<void> {
 }
 
 // Update an existing user in Supabase
-export async function updateUser(
-  number: string,
-  update: Partial<User>,
-): Promise<void> {
+export async function updateUser(number: string, update: Partial<User>): Promise<void> {
   try {
     const { error } = await supabase
       .from("users")

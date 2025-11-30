@@ -46,9 +46,7 @@ export async function startBot(): Promise<BotSocket> {
         console.log("💡 Solusi:");
         console.log("   1. Tunggu beberapa menit sebelum mencoba lagi");
         console.log("   2. Gunakan koneksi internet yang berbeda");
-        console.log(
-          "   3. Pastikan WhatsApp Web tidak sedang dibuka di browser",
-        );
+        console.log("   3. Pastikan WhatsApp Web tidak sedang dibuka di browser");
         console.log("   4. Hapus folder auth_info dan coba lagi\n");
         return;
       }
@@ -57,9 +55,7 @@ export async function startBot(): Promise<BotSocket> {
         console.log("🔄 Mencoba reconnect dalam 5 detik...\n");
         setTimeout(() => startBot(), 5000);
       } else {
-        console.log(
-          "❌ Logged out. Hapus folder auth_info dan jalankan ulang.\n",
-        );
+        console.log("❌ Logged out. Hapus folder auth_info dan jalankan ulang.\n");
       }
     } else if (connection === "open") {
       console.log("\n✅ Bot berhasil terhubung ke WhatsApp!");
