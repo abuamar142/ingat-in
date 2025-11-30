@@ -3,7 +3,8 @@ import type { BotSocket, User } from "../../types/index.js";
 import { VALIDATION, LOCALE } from "../../constants/constants.js";
 
 export async function handleCheckin(sock: BotSocket, from: string, _user: User): Promise<void> {
-  const hour = new Date().getHours();
+  const now = new Date();
+  const hour = now.getHours();
   const update: any = { last_checkin: new Date().toISOString() };
 
   // Pagi (06:00 - 11:59)
@@ -18,6 +19,10 @@ export async function handleCheckin(sock: BotSocket, from: string, _user: User):
   else {
     update.absen_pagi = true;
     update.absen_sore = true;
+  }
+
+  if (update.suspend_until > now.toISOString()) {
+    update.suspend_until = null;
   }
 
   await updateUser(from, update);
