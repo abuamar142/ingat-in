@@ -4,8 +4,8 @@ dist
 .git
 .gitignore
 *.md
-.env
-.env.*
+!README.md
+.env.example
 auth_info
 data
 logs
@@ -13,6 +13,8 @@ logs
 .DS_Store
 .vscode
 .idea
-Dockerfile
-docker-compose.yml
-docker-compose.dev.yml
+Dockerfile*
+docker-compose*.yml
+docker-*.sh
+backups
+Makefile

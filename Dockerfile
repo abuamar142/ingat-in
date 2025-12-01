@@ -19,15 +19,13 @@ COPY package*.json ./
 # Install all dependencies
 RUN npm ci
 
-# Copy source code
+# Copy source code and .env
 COPY . .
 
 # Build TypeScript
 RUN npm run build
 
-# Copy HTML file to dist
-RUN mkdir -p dist/web/public && cp -r src/web/public/* dist/web/public/
-
+# Prune dev dependencies
 RUN npm prune --production
 
 # Create directories for volumes
