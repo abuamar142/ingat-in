@@ -94,7 +94,7 @@ export async function handleStatusReasonInput(
     start_date: startDate.toISOString().split("T")[0],
     end_date: endDate.toISOString().split("T")[0],
     days: state.days,
-    status: "active",
+    status: "pending",
   });
 
   if (!leave) {
@@ -111,7 +111,7 @@ export async function handleStatusReasonInput(
   // Kirim konfirmasi ke user
   const statusLabel = STATUS_LABELS[state.type];
   await sock.sendMessage(from, {
-    text: `✅ *${statusLabel}* kamu telah dicatat!\n\n📅 Durasi: ${state.days} hari\n📝 Alasan: ${trimmedReason}\n⏰ Aktif kembali: ${endDate.toLocaleDateString(LOCALE, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}\n\nReminder akan otomatis aktif kembali setelah periode ${statusLabel.toLowerCase()} selesai.`,
+    text: `✅ *${statusLabel}* kamu telah diajukan!\n\n📅 Durasi: ${state.days} hari\n📝 Alasan: ${trimmedReason}\n📆 Periode: ${startDate.toLocaleDateString(LOCALE, { day: "numeric", month: "long" })} - ${endDate.toLocaleDateString(LOCALE, { day: "numeric", month: "long", year: "numeric" })}\n\n⏳ Menunggu persetujuan admin...\nReminder akan otomatis aktif setelah admin menyetujui permintaan kamu.`,
   });
 
   // Kirim notifikasi ke admin
@@ -133,14 +133,17 @@ async function sendAdminNotification(
 ): Promise<void> {
   const statusLabel = STATUS_LABELS[statusType];
   const userName = user.name || "User tanpa nama";
-  const message = `🔔 *Notifikasi ${statusLabel}*
+  const message = `🔔 *Permintaan ${statusLabel} Baru*
 
 👤 *User:* ${userName}
 📱 *Nomor:* ${user.number.replace("@s.whatsapp.net", "")}
-📊 *Status:* ${statusLabel}
+📊 *Jenis:* ${statusLabel}
 📅 *Durasi:* ${days} hari
 📝 *Alasan:* ${reason}
-⏰ *Aktif kembali:* ${until.toLocaleDateString(LOCALE, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`;
+⏰ *Periode:* ${until.toLocaleDateString(LOCALE, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+
+⏳ *Status:* Menunggu persetujuan
+🌐 Silakan approve di dashboard admin.`;
 
   // Kirim ke semua admin
   for (const adminNumber of ADMIN_NUMBERS) {
