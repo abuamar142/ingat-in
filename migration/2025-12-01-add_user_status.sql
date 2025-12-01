@@ -52,3 +52,74 @@ CREATE TRIGGER trigger_user_leaves_updated_at
   BEFORE UPDATE ON user_leaves
   FOR EACH ROW
   EXECUTE FUNCTION update_user_leaves_updated_at();
+
+-- =====================================================
+-- Enable Row Level Security (RLS)
+-- =====================================================
+
+ALTER TABLE user_leaves ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Allow anonymous read access (for dashboard & bot queries)
+CREATE POLICY "Allow anonymous read access on user_leaves" ON user_leaves
+  FOR SELECT
+  USING (true);
+
+-- Policy: Allow anonymous insert (for new leave requests from bot)
+CREATE POLICY "Allow anonymous insert on user_leaves" ON user_leaves
+  FOR INSERT
+  WITH CHECK (true);
+
+-- Policy: Allow anonymous update (for status updates, approval system)
+CREATE POLICY "Allow anonymous update on user_leaves" ON user_leaves
+  FOR UPDATE
+  USING (true)
+  WITH CHECK (true);
+
+-- Policy: Allow anonymous delete (for cancellation, cleanup)
+CREATE POLICY "Allow anonymous delete on user_leaves" ON user_leaves
+  FOR DELETE
+  USING (true);
+
+-- =====================================================
+-- Enable Realtime (Optional)
+-- =====================================================
+
+-- Enable realtime for the user_leaves table
+-- This allows admin dashboard to subscribe to live leave updates
+ALTER PUBLICATION supabase_realtime ADD TABLE user_leaves;
+
+-- =====================================================
+-- Useful Queries for Testing
+-- =====================================================
+
+-- View all active leaves
+-- SELECT ul.*, u.name 
+-- FROM user_leaves ul
+-- JOIN users u ON ul.user_number = u.number
+-- WHERE ul.status = 'active'
+-- ORDER BY ul.start_date;
+
+-- Count leaves by type
+-- SELECT 
+--   type,
+--   COUNT(*) as total_requests,
+--   SUM(days) as total_days
+-- FROM user_leaves
+-- WHERE EXTRACT(YEAR FROM start_date) = EXTRACT(YEAR FROM CURRENT_DATE)
+-- GROUP BY type;
+
+-- Find users with most leaves this year
+-- SELECT 
+--   user_number,
+--   COUNT(*) as leave_count,
+--   SUM(days) as total_days
+-- FROM user_leaves
+-- WHERE EXTRACT(YEAR FROM start_date) = EXTRACT(YEAR FROM CURRENT_DATE)
+-- GROUP BY user_number
+-- ORDER BY leave_count DESC;
+
+-- Mark old active leaves as completed (run manually or via cron)
+-- UPDATE user_leaves 
+-- SET status = 'completed'
+-- WHERE status = 'active' 
+--   AND end_date < CURRENT_DATE;
