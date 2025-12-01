@@ -3,6 +3,7 @@ import { sendReminder } from "./reminder.js";
 import { resetAllAbsen } from "./reset.js";
 import type { BotSocket } from "../types/index.js";
 import { SCHEDULE, LOCALE } from "../constants/constants.js";
+import { markCompletedLeaves } from "../utils/leaves.js";
 
 export function startCron(sock: BotSocket): void {
   console.log("⏰ Scheduler dimulai...\n");
@@ -11,6 +12,10 @@ export function startCron(sock: BotSocket): void {
   cron.schedule(SCHEDULE.RESET_ABSEN, () => {
     console.log("🌙 Tengah malam - Reset semua absen...");
     resetAllAbsen();
+
+    // Also mark completed leaves
+    console.log("🔄 Marking completed leaves...");
+    markCompletedLeaves();
   });
 
   // Pagi: Jam 08:00

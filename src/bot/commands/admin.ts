@@ -2,6 +2,7 @@ import { loadUsers, resetAllUsers } from "../../utils/db.js";
 import { sendReminder } from "../../scheduler/reminder.js";
 import type { BotSocket } from "../../types/index.js";
 import { ADMIN_NUMBERS } from "../../constants/constants.js";
+import { getActiveLeave, getAllActiveLeaves } from "../../utils/leaves.js";
 
 function isAdmin(number: string): boolean {
   return ADMIN_NUMBERS.includes(number);
@@ -84,7 +85,8 @@ export async function handleAdminCommand(
     const users = await loadUsers();
     let message = `📋 *Daftar Semua User* (${users.length} user)\n\n`;
 
-    users.forEach((user, index) => {
+    for (let index = 0; index < users.length; index++) {
+      const user = users[index];
       const pagi = user.absen_pagi ? "✅" : "❌";
       const sore = user.absen_sore ? "✅" : "❌";
       const name = user.name || "Belum isi nama";
@@ -94,10 +96,43 @@ export async function handleAdminCommand(
           : ""
         : "";
 
-      message += `${index + 1}. ${name} ${suspended}\n`;
+      // Check if user on leave
+      const activeLeave = await getActiveLeave(user.number);
+      const leaveIcon = activeLeave ? "🏥" : "";
+      const leaveInfo = activeLeave
+        ? `\n   ${activeLeave.type.toUpperCase()} sampai ${new Date(activeLeave.end_date).toLocaleDateString("id-ID")}`
+        : "";
+
+      message += `${index + 1}. ${name} ${suspended}${leaveIcon}\n`;
       message += `   ${user.number}\n`;
-      message += `   Pagi: ${pagi} | Sore: ${sore}\n\n`;
-    });
+      message += `   Pagi: ${pagi} | Sore: ${sore}${leaveInfo}\n\n`;
+    }
+
+    await sock.sendMessage(from, { text: message });
+    return true;
+  }
+
+  // List all active leaves
+  if (text === "list leaves" || text === "leaves") {
+    const activeLeaves = await getAllActiveLeaves();
+
+    if (activeLeaves.length === 0) {
+      await sock.sendMessage(from, {
+        text: "📋 *Active Leaves*\n\nTidak ada user yang sedang izin/sakit/cuti saat ini.",
+      });
+      return true;
+    }
+
+    let message = `📋 *Active Leaves* (${activeLeaves.length} user)\n\n`;
+
+    for (const leave of activeLeaves) {
+      const endDate = new Date(leave.end_date).toLocaleDateString("id-ID");
+      message += `🏥 *${leave.type.toUpperCase()}*\n`;
+      message += `   User: ${leave.user_number.replace("@s.whatsapp.net", "")}\n`;
+      message += `   Durasi: ${leave.days} hari\n`;
+      message += `   Sampai: ${endDate}\n`;
+      message += `   Alasan: ${leave.reason}\n\n`;
+    }
 
     await sock.sendMessage(from, { text: message });
     return true;
@@ -119,6 +154,7 @@ export async function handleAdminCommand(
 
 *Info Commands:*
 • list users - Lihat semua user & status
+• list leaves - Lihat user yang sedang izin/sakit/cuti
 • stats - Lihat statistik
 
 *Help:*

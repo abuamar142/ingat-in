@@ -1,6 +1,7 @@
 import { updateUser, loadUsers } from "../../utils/db.js";
 import type { BotSocket, User } from "../../types/index.js";
 import { VALIDATION, LOCALE } from "../../constants/constants.js";
+import { getStatusInfo } from "./status.js";
 
 export async function handleCheckin(sock: BotSocket, from: string, _user: User): Promise<void> {
   const now = new Date();
@@ -44,10 +45,13 @@ export async function handleStatus(sock: BotSocket, from: string, user: User): P
     ? `\nReminder ditunda sampai: ${new Date(user.suspend_until).toLocaleString(LOCALE)}`
     : "";
 
+  const statusInfo = await getStatusInfo(user);
+
   await sock.sendMessage(from, {
     text: `📊 *Status Absen Kamu*
 
 Nama: ${user.name || "Belum diisi"}
+${statusInfo}
 Absen Pagi: ${pagiStatus}
 Absen Sore: ${soreStatus}
 Last Check-in: ${lastCheckin}${suspendText}`,

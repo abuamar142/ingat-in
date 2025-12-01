@@ -21,6 +21,11 @@ export async function handleMenu(sock: BotSocket, from: string): Promise<void> {
 • suspend [menit] - Tunda reminder (contoh: suspend 30)
 • stats - Lihat statistik keseluruhan
 
+*Status Commands:*
+• izin [hari] - Ajukan izin (contoh: izin 2)
+• sakit [hari] - Lapor sakit (contoh: sakit 1)
+• cuti [hari] - Ajukan cuti (contoh: cuti 3)
+
 *Admin Commands:*
 • admin help - Lihat menu admin`,
   });

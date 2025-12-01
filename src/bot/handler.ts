@@ -8,6 +8,11 @@ import {
   isInRegistration,
 } from "./commands/registration.js";
 import { handleAdminCommand } from "./commands/admin.js";
+import {
+  handleStatusRequest,
+  handleStatusReasonInput,
+  isInStatusInput,
+} from "./commands/status.js";
 import { PUBLIC_COMMANDS, AUTH_COMMANDS, type PublicCommand } from "../constants/constants.js";
 
 function isPublicCommand(text: string): text is PublicCommand {
@@ -36,6 +41,13 @@ export async function handleIncoming(sock: BotSocket, msg: WAMessage): Promise<v
   // Priority 1: Handle registrasi yang sedang berjalan
   if (isInRegistration(from)) {
     await handleRegistrationInput(sock, from, rawText.trim());
+    return;
+  }
+
+  // Priority 1.5: Handle status input (izin/sakit/cuti reason)
+  const user = await isUserExists(from);
+  if (user && isInStatusInput(from)) {
+    await handleStatusReasonInput(sock, from, user, rawText.trim());
     return;
   }
 
@@ -110,5 +122,14 @@ async function handleAuthCommand(sock: BotSocket, from: string, text: string): P
     const minutesStr = text.replace("suspend ", "").trim();
     const minutes = parseInt(minutesStr, 10);
     await handleSuspend(sock, from, user, minutes);
+  } else if (text.startsWith("izin")) {
+    const daysStr = text.replace("izin", "").trim();
+    await handleStatusRequest(sock, from, user, "izin", daysStr || "1");
+  } else if (text.startsWith("sakit")) {
+    const daysStr = text.replace("sakit", "").trim();
+    await handleStatusRequest(sock, from, user, "sakit", daysStr || "1");
+  } else if (text.startsWith("cuti")) {
+    const daysStr = text.replace("cuti", "").trim();
+    await handleStatusRequest(sock, from, user, "cuti", daysStr || "1");
   }
 }

@@ -1,7 +1,7 @@
 // Bot command constants
 /**
  * Configuration constants for Ingat-In Bot
- * 
+ *
  * Centralized configuration untuk commands, validation, dan scheduler.
  * Edit file ini untuk mengubah behavior bot.
  */
@@ -11,12 +11,32 @@ export const PUBLIC_COMMANDS = ["halo", "hi", "hello", "daftar", "help", "menu"]
 export type PublicCommand = (typeof PUBLIC_COMMANDS)[number];
 
 // Auth commands - perlu autentikasi (user sudah terdaftar & punya nama)
-export const AUTH_COMMANDS = ["sudah", "status", "stats", "suspend"] as const;
+export const AUTH_COMMANDS = [
+  "sudah",
+  "status",
+  "stats",
+  "suspend",
+  "izin",
+  "sakit",
+  "cuti",
+] as const;
 export type AuthCommand = (typeof AUTH_COMMANDS)[number];
 
-// Admin numbers - ganti dengan nomor admin yang sebenarnya
+// Status types for user leave/absence
+export const STATUS_TYPES = ["izin", "sakit", "cuti"] as const;
+export type StatusType = (typeof STATUS_TYPES)[number];
+
+// Status type labels for display
+export const STATUS_LABELS = {
+  izin: "Izin",
+  sakit: "Sakit",
+  cuti: "Cuti",
+  aktif: "Aktif",
+} as const;
+
+// Admin numbers
 export const ADMIN_NUMBERS = [
-  "6282265017034@s.whatsapp.net", // Ganti dengan nomor admin Anda
+  "6282265017034@s.whatsapp.net",
 ];
 
 // Reminder links
@@ -31,6 +51,10 @@ export const VALIDATION = {
   MAX_NAME_LENGTH: 50,
   MIN_SUSPEND_MINUTES: 1,
   MAX_SUSPEND_MINUTES: 120,
+  MIN_STATUS_DAYS: 1,
+  MAX_STATUS_DAYS: 30,
+  MIN_REASON_LENGTH: 5,
+  MAX_REASON_LENGTH: 200,
 } as const;
 
 // Reminder schedule (weekdays only: Monday-Friday)
