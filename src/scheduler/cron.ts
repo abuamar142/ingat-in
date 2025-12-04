@@ -8,47 +8,51 @@ import { markCompletedLeaves } from "../utils/leaves.js";
 export function startCron(sock: BotSocket): void {
   console.log("⏰ Scheduler dimulai...\n");
 
-  // Reset absen jam 00:01 (tengah malam)
-  cron.schedule(SCHEDULE.RESET_ABSEN, () => {
-    console.log("🌙 Tengah malam - Reset semua absen...");
-    resetAllAbsen();
-
-    // Also mark completed leaves
-    console.log("🔄 Marking completed leaves...");
-    markCompletedLeaves();
-  });
-
-  // Pagi: Jam 08:00
-  cron.schedule(SCHEDULE.REMINDER_PAGI, () => {
-    console.log("🌅 Pagi - Mengirim reminder absen pagi...");
-    sendReminder(sock, "pagi");
-  });
-
-  // Sore: Jam 17:00
-  cron.schedule(SCHEDULE.REMINDER_SORE, () => {
-    console.log("🌆 Sore - Mengirim reminder absen sore...");
-    sendReminder(sock, "sore");
-  });
-
-  // Reminder ulang setiap 5 menit untuk yang belum absen
+  // Cek setiap 5 menit untuk semua operasi
   cron.schedule(SCHEDULE.REMINDER_INTERVAL, () => {
     const now = new Date();
     const hour = now.getHours();
+    const minute = now.getMinutes();
     const time = now.toLocaleTimeString(LOCALE);
 
-    // Pagi (08:00 - 11:59)
-    if (hour >= 8 && hour < 12) {
-      console.log(`🔔 [${time}] Reminder ulang - Absen pagi...`);
-      sendReminder(sock, "pagi");
+    // Reset absen jam 00:00 atau 00:05 (tengah malam)
+    if (hour === 0 && minute <= 5) {
+      console.log("🌙 Tengah malam - Reset semua absen...");
+      resetAllAbsen();
+      console.log("🔄 Marking completed leaves...");
+      markCompletedLeaves();
+      return;
     }
 
-    // Sore (17:00 - 23:59)
-    else if (hour >= 17) {
+    // Reminder pagi jam 08:00
+    if (hour === 8 && minute === 0) {
+      console.log(`🌅 [${time}] Pagi - Mengirim reminder absen pagi...`);
+      sendReminder(sock, "pagi");
+      return;
+    }
+
+    // Reminder sore jam 17:00
+    if (hour === 17 && minute === 0) {
+      console.log(`🌆 [${time}] Sore - Mengirim reminder absen sore...`);
+      sendReminder(sock, "sore");
+      return;
+    }
+
+    // Reminder ulang pagi (08:05 - 11:59)
+    if (hour >= 8 && hour < 12 && (hour > 8 || minute >= 5)) {
+      console.log(`🔔 [${time}] Reminder ulang - Absen pagi...`);
+      sendReminder(sock, "pagi");
+      return;
+    }
+
+    // Reminder ulang sore (17:05 - 23:59)
+    if (hour >= 17 && (hour > 17 || minute >= 5)) {
       console.log(`🔔 [${time}] Reminder ulang - Absen sore...`);
       sendReminder(sock, "sore");
-    } else {
-      // Log untuk debugging - kenapa tidak kirim
-      console.log(`⏸️ [${time}] Tidak ada reminder (jam: ${hour})`);
+      return;
     }
+
+    // Log untuk debugging - kenapa tidak kirim
+    console.log(`⏸️ [${time}] Tidak ada reminder (jam: ${hour}:${minute})`);
   });
 }

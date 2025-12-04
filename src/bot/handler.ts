@@ -14,6 +14,7 @@ import {
   isInStatusInput,
 } from "./commands/status.js";
 import { PUBLIC_COMMANDS, AUTH_COMMANDS, type PublicCommand } from "../constants/constants.js";
+import { isAdmin } from "../utils/auth.js";
 
 function isPublicCommand(text: string): text is PublicCommand {
   return PUBLIC_COMMANDS.includes(text as PublicCommand);
@@ -32,12 +33,33 @@ export async function handleIncoming(sock: BotSocket, msg: WAMessage): Promise<v
 
   const text = rawText.trim().toLowerCase();
 
-  // Priority 0: Handle admin commands first
-  const isAdminHandled = await handleAdminCommand(sock, from, text);
-  if (isAdminHandled) {
+  // Pisahkan routing untuk admin dan user
+  if (isAdmin(from)) {
+    // Admin hanya bisa akses menu admin
+    const isAdminHandled = await handleAdminCommand(sock, from, text);
+    if (isAdminHandled) {
+      return;
+    }
+
+    // Admin bisa akses menu/help untuk melihat menu admin
+    if (text === "menu" || text === "help") {
+      await handleMenu(sock, from);
+      return;
+    }
+
+    // Admin bisa akses stats
+    if (text === "stats") {
+      await handleStats(sock, from);
+      return;
+    }
+
+    await sock.sendMessage(from, {
+      text: "❓ Command tidak dikenali. Ketik 'menu' atau 'help' untuk melihat daftar command admin.",
+    });
     return;
   }
 
+  // User routing
   // Priority 1: Handle registrasi yang sedang berjalan
   if (isInRegistration(from)) {
     await handleRegistrationInput(sock, from, rawText.trim());

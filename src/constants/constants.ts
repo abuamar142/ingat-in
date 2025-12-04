@@ -35,9 +35,7 @@ export const STATUS_LABELS = {
 } as const;
 
 // Admin numbers
-export const ADMIN_NUMBERS = [
-  "6282265017034@s.whatsapp.net",
-];
+export const ADMIN_NUMBERS = ["085157803374@s.whatsapp.net"];
 
 // Reminder links
 export const REMINDER_LINKS = {
@@ -57,12 +55,9 @@ export const VALIDATION = {
   MAX_REASON_LENGTH: 200,
 } as const;
 
-// Reminder schedule (weekdays only: Monday-Friday)
+// Reminder schedule
 export const SCHEDULE = {
-  RESET_ABSEN: "1 0 * * 1-5", // Reset jam 00:01 (tengah malam) - Senin sampai Jumat
-  REMINDER_PAGI: "0 8 * * 1-5", // Reminder pagi jam 08:00 - Senin sampai Jumat
-  REMINDER_SORE: "0 17 * * 1-5", // Reminder sore jam 17:00 - Senin sampai Jumat
-  REMINDER_INTERVAL: "*/5 * * * 1-5", // Reminder ulang setiap 5 menit - Senin sampai Jumat
+  REMINDER_INTERVAL: "*/5 0,8-23 * * 1-5",
 } as const;
 
 // Timezone

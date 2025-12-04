@@ -1,12 +1,8 @@
 import { loadUsers, resetAllUsers } from "../../utils/db.js";
 import { sendReminder } from "../../scheduler/reminder.js";
 import type { BotSocket } from "../../types/index.js";
-import { ADMIN_NUMBERS } from "../../constants/constants.js";
 import { getActiveLeave, getAllActiveLeaves } from "../../utils/leaves.js";
-
-function isAdmin(number: string): boolean {
-  return ADMIN_NUMBERS.includes(number);
-}
+import { isAdmin } from "../../utils/auth.js";
 
 export async function handleAdminCommand(
   sock: BotSocket,
@@ -14,8 +10,6 @@ export async function handleAdminCommand(
   text: string
 ): Promise<boolean> {
   // Check if user is admin
-  console.log(`🔑 Memeriksa admin untuk nomor: ${from}`);
-  console.log(`${from} adalah admin: ${isAdmin(from)}`);
   if (!isAdmin(from)) {
     return false;
   }
@@ -135,31 +129,6 @@ export async function handleAdminCommand(
     }
 
     await sock.sendMessage(from, { text: message });
-    return true;
-  }
-
-  // Admin help menu
-  if (text === "admin help" || text === "admin menu") {
-    await sock.sendMessage(from, {
-      text: `🔧 *Admin Commands*
-
-*Reset Commands:*
-• reset pagi - Reset absen pagi
-• reset sore - Reset absen sore  
-• reset all - Reset semua absen
-
-*Manual Reminder:*
-• send pagi - Kirim reminder pagi sekarang
-• send sore - Kirim reminder sore sekarang
-
-*Info Commands:*
-• list users - Lihat semua user & status
-• list leaves - Lihat user yang sedang izin/sakit/cuti
-• stats - Lihat statistik
-
-*Help:*
-• admin help - Menu admin ini`,
-    });
     return true;
   }
 

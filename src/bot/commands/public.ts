@@ -1,4 +1,5 @@
 import type { BotSocket } from "../../types/index.js";
+import { isAdmin } from "../../utils/auth.js";
 
 export async function handleGreeting(sock: BotSocket, from: string): Promise<void> {
   await sock.sendMessage(from, {
@@ -7,8 +8,30 @@ export async function handleGreeting(sock: BotSocket, from: string): Promise<voi
 }
 
 export async function handleMenu(sock: BotSocket, from: string): Promise<void> {
-  await sock.sendMessage(from, {
-    text: `📋 *Menu Ingat-In Bot*
+  if (isAdmin(from)) {
+    await sock.sendMessage(from, {
+      text: `🔧 *Admin Menu*
+
+*Reset Commands:*
+• reset pagi - Reset absen pagi
+• reset sore - Reset absen sore  
+• reset all - Reset semua absen
+
+*Manual Reminder:*
+• send pagi - Kirim reminder pagi sekarang
+• send sore - Kirim reminder sore sekarang
+
+*Info Commands:*
+• list users - Lihat semua user & status
+• list leaves - Lihat user yang sedang izin/sakit/cuti
+• stats - Lihat statistik
+
+*Help:*
+• menu/help - Menu admin ini`,
+    });
+  } else {
+    await sock.sendMessage(from, {
+      text: `📋 *Menu Ingat-In Bot*
 
 *Public Commands:*
 • halo/hi/hello - Sambutan
@@ -24,9 +47,7 @@ export async function handleMenu(sock: BotSocket, from: string): Promise<void> {
 *Status Commands:*
 • izin [hari] - Ajukan izin (contoh: izin 2)
 • sakit [hari] - Lapor sakit (contoh: sakit 1)
-• cuti [hari] - Ajukan cuti (contoh: cuti 3)
-
-*Admin Commands:*
-• admin help - Lihat menu admin`,
-  });
+• cuti [hari] - Ajukan cuti (contoh: cuti 3)`,
+    });
+  }
 }
